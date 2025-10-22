@@ -28,7 +28,7 @@ def fetch_data_through_api(symbol, api_key, function, interval = None):
         df = pd.read_csv(io.StringIO(response.text))
         
         expected_cols = {'timestamp', 'open', 'high', 'low', 'close', 'volume'}
-        if expected_cols != df.columns:
+        if not expected_cols.issubset(df.columns):
             print("\n***********************\nUnexpected data format from API.\n***********************\n")
             return None
         
@@ -171,9 +171,9 @@ def get_data(symbol, chart_type, time_series, interval, start_date, end_date):
     return filtered_df
 
 # function to display graph to users browser
-def display_data_to_user():
-    df = get_data()
-# call user input function, use that input to fetch data, send data to graph, display graph
+def display_data_to_user(df):
+    return
+
 
 def main():
     while(True):
