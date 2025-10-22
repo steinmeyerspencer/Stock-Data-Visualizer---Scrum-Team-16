@@ -20,20 +20,32 @@ def fetch_data_through_api(symbol, api_key, function, interval = None):
     if function == "TIME_SERIES_INTRADAY":
         params["interval"] = interval or "60min"
     
-    # Make the request
-    response = requests.get(url, params=params)
-    response.raise_for_status()  # will raise an error if the request failed
-    
-    df = pd.read_csv(io.StringIO(response.text))
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df[['open', 'high', 'low', 'close', 'volume']] = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
-    
-    # now the timestamp is the index, so we can do df.loc[start_date:end_date] with our dataframe
-    df = df.set_index('timestamp')
-    df = df.sort_index()
-    
-    
-    return df
+    try:
+        # make the request
+        response = requests.get(url, params=params)
+        response.raise_for_status()  # will raise an error if the request failed
+        
+        df = pd.read_csv(io.StringIO(response.text))
+        
+        expected_cols = {'timestamp', 'open', 'high', 'low', 'close', 'volume'}
+        if expected_cols != df.columns:
+            print("\n***********************\nUnexpected data format from API.\n***********************\n")
+            return None
+        
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df[['open', 'high', 'low', 'close', 'volume']] = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
+        
+        # now the timestamp is the index, so we can do df.loc[start_date:end_date] with our dataframe
+        df = df.set_index('timestamp')
+        df = df.sort_index()
+        
+        return df
+    except requests.exceptions.RequestException:
+        print("\nAPI Request failed.")
+    except Exception as e:
+        print(f"\nFailed to process data: {e}")
+        
+    return None
 
 
 # function to get and validate user input
@@ -71,7 +83,7 @@ def get_user_input():
         print("3. Weekly")
         print("4. Monthly")
         
-        time_series_option = input("Enter time series option (1, 2, 3, 4): ")
+        time_series_option = input("\nEnter time series option (1, 2, 3, 4): ")
 
         
         if time_series_option == "1":
@@ -114,10 +126,14 @@ def get_user_input():
     # get start and end dates, make sure start date < end date
     while True:
         start_date_str = input("\nEnter the start date (YYYY-MM-DD): ")
-        end_date_str = input("\nEnter the end date (YYYY-MM-DD): ")
-
         try:
             start_date = pd.to_datetime(start_date_str)
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+            continue
+        
+        end_date_str = input("\nEnter the end date (YYYY-MM-DD): ")
+        try:
             end_date = pd.to_datetime(end_date_str)
         except ValueError:
             print("Invalid date format. Please use YYYY-MM-DD.")
@@ -140,6 +156,11 @@ def get_data(symbol, chart_type, time_series, interval, start_date, end_date):
 
     df = fetch_data_through_api(symbol, API_KEY, time_series, interval)
     
+    # if the data was not fetched for whatever reason, get_data should return None or may just be empty
+    if df is None or df.empty:
+        print("\n***********************\nNo data fetched. Please try a different symbol or date range.\n***********************\n")
+        return None
+    
     filtered_df = df.loc[start_date:end_date]
     
     print(f"\nFetched {len(df)} records for {symbol}.")
@@ -157,7 +178,11 @@ def display_data_to_user():
 def main():
     while(True):
         symbol, chart_type, time_series, interval, start_date, end_date = get_user_input()
-        get_data(symbol, chart_type, time_series, interval, start_date, end_date)
+        result = get_data(symbol, chart_type, time_series, interval, start_date, end_date)
+        
+        # handling error while fetching data so that it doesn't break the program
+        if result is None:
+            continue
         # df = get_data(symbol, chart_type, time_series, interval, start_date, end_date)
         # display_to_user(df)
         view_again = input("Would you like to view more stock data? Press 'y' to continue: ").lower()
