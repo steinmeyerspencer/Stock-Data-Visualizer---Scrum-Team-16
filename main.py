@@ -3,6 +3,8 @@ import requests
 import pandas as pd
 import os
 import io
+import pygal
+from pygal.style import *
 
 # function to fetch data through API connection using user input
 def fetch_data_through_api(symbol, api_key, function, interval = None):
@@ -174,6 +176,43 @@ def get_data(symbol, chart_type, time_series, interval, start_date, end_date):
 def display_data_to_user(df):
     return
 
+#function to create line chart
+def create_line_chart(df, symbol, start_date, end_date):
+    line_chart = pygal.Line(
+        style=LightStyle, 
+        x_label_rotation=20, 
+        show_minor_x_labels=False,
+        truncate_label=10,
+        show_legend=True
+    )
+    line_chart.title = f"Stock Data for {symbol}: {start_date.date()} to {end_date.date()}"
+    line_chart.x_labels = [x.strftime("%Y-%m-%d") for x in df.index]
+
+    line_chart.add("Open", df['open'].tolist())
+    line_chart.add("High", df['high'].tolist())
+    line_chart.add("Low", df['low'].tolist())
+    line_chart.add("Close", df['close'].tolist())
+
+    line_chart.render_in_browser()
+
+#function to create bar chart
+def create_bar_chart(df, symbol, start_date, end_date):
+    bar_chart = pygal.Bar(
+        style=LightStyle, 
+        x_label_rotation=20, 
+        show_minor_x_labels=False,
+        truncate_label=10,
+        show_legend=True
+    )
+    bar_chart.title = f"Stock Data for {symbol}: {start_date.date()} to {end_date.date()}"
+    bar_chart.x_labels = [x.strftime("%Y-%m-%d") for x in df.index]
+
+    bar_chart.add("Open", df['open'].tolist())
+    bar_chart.add("High", df['high'].tolist())
+    bar_chart.add("Low", df['low'].tolist())
+    bar_chart.add("Close", df['close'].tolist())
+
+    bar_chart.render_in_browser()
 
 def main():
     while(True):
