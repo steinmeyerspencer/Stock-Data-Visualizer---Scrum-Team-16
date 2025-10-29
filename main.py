@@ -135,11 +135,14 @@ def get_user_input():
             continue
         
         end_date_str = input("\nEnter the end date (YYYY-MM-DD): ")
-        try:
-            end_date = pd.to_datetime(end_date_str)
-        except ValueError:
-            print("Invalid date format. Please use YYYY-MM-DD.")
-            continue
+        # another while loop so you don't have to reinput the start date if you mess up the end date
+        while True:
+            try:
+                end_date = pd.to_datetime(end_date_str)
+                break
+            except ValueError:
+                print("Invalid date format. Please use YYYY-MM-DD.")
+                continue
 
         if start_date > end_date:
             print("Start date must be earlier than end date.")
@@ -168,7 +171,6 @@ def get_data(symbol, chart_type, time_series, interval, start_date, end_date):
     print(f"\nFetched {len(df)} records for {symbol}.")
     print(f"Displaying data from {start_date.date()} to {end_date.date()}: {len(filtered_df)} records.")
     print(f"Will use {chart_type} chart\n")
-    print(filtered_df.head())
     
     return filtered_df
 
