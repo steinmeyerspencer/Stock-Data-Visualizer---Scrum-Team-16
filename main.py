@@ -173,8 +173,17 @@ def get_data(symbol, chart_type, time_series, interval, start_date, end_date):
     return filtered_df
 
 # function to display graph to users browser
-def display_data_to_user(df):
-    return
+def display_data_to_user(df, symbol, chart_type, start_date, end_date):
+    if df is None or df.empty:
+        print("\n***********************\nNo data available to display.\n***********************\n")
+        return
+    
+    if chart_type == "Line":
+        create_line_chart(df, symbol, start_date, end_date)
+    elif chart_type == "Bar":
+        create_bar_chart(df, symbol, start_date, end_date)
+    else:
+        print("\n***********************\nUnsupported chart type\n***********************\n")
 
 #function to create line chart
 def create_line_chart(df, symbol, start_date, end_date):
@@ -222,9 +231,12 @@ def main():
         # handling error while fetching data so that it doesn't break the program
         if result is None:
             continue
-        # df = get_data(symbol, chart_type, time_series, interval, start_date, end_date)
-        # display_to_user(df)
+        
+        print("\nGenerating chart... Please wait.\n")
+        display_data_to_user(result, symbol, chart_type, start_date, end_date)
+        
         view_again = input("Would you like to view more stock data? Press 'y' to continue: ").lower()
+        
         if view_again == "y":
             continue
         else:
